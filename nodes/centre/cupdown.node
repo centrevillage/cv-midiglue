@@ -1,0 +1,39 @@
+<Comment>
+Cyclic updown node
+
+<I/O>
+input Any : Decrement value
+input Any : Increment value
+input Any : Output current value
+input Int : Min value
+input Int : Max value
+output Int : Counter output
+
+<Description>
+Counter which can count upwards and downwards.
+When a count is over the range, it's reset to Min/Max value.
+
+<Parameter>
+parameter Value = 1 : default value
+parameter Min = 1 : min value
+parameter Max = 16 : max value
+
+<Code>
+static Int value = ${Value};
+static Int min = ${Min};
+static Int max = ${Max};
+
+if (@in0) {
+  value = (value - 1) < min ? max : (value - 1);
+  out0 = value;
+} else if (@in1) {
+  value = (value + 1) > max ? min : (value + 1);
+  out0 = value;
+} else if (@in2) {
+  out0 = value;
+} else if (@in3) {
+  min = in3;
+} else if (@in4) {
+  max = in4;
+}
+
