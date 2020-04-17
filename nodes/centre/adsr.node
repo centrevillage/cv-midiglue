@@ -1,0 +1,173 @@
+<Comment>
+ADSR Envelope
+
+MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
+
+converted form some C code... (-_-)
+
+<I/O>
+input Int : Gate(0 or 1)
+input Float : Attack Time(ms)
+input Float : Decay Time(ms)
+input Float : Sustain Level(0..1.0)
+input Float : Release Time(ms)
+output Float : Envelope(0..1.0)
+
+<Description>
+ADSR Envelope
+
+<Parameter>
+parameter AttackTime = 0.0 : Attack Time(ms)
+parameter DecayTime = 0.0 : Decay Time(ms)
+parameter SustainLevel = 1.0 : Sustain Level(0..1.0)
+parameter ReleaseTime = 0.0 : Release Time(ms)
+
+<Setup>
+${this}( &(Midiglue::__bang) , Midiglue::SETUP );
+
+<Code>
+
+class Envelope {
+public:
+  const float ENV_SPACE = 0.0001f;
+  const float ENV_POS_DELTA = 1.0f;
+
+  enum EnvelopeBreakPoint {
+    EBP_START = 0,
+    EBP_ATTACK,
+    EBP_DECAY,
+    EBP_SUSTAIN,
+    EBP_RELEASE,
+  };
+
+  struct EnvelopeContext {
+    float attack; 
+    float decay; 
+    float release; 
+    float sustain_level; 
+    uint8_t breakpoint;
+    float value;
+    float released_value;
+    float position;
+    uint8_t on;
+  };
+
+  EnvelopeContext ctx;
+
+  Envelope() {
+    parameter_init();
+  }
+
+  void attack_process() {
+    if (ctx.value < (1.0f - ENV_SPACE) && (ctx.attack != 0.0f)) {
+      ctx.position += ENV_POS_DELTA / ctx.attack;
+      ctx.value = ctx.position; 
+    } else {
+      ctx.value = 1.0f;
+      ctx.position = 0.0f;
+      ctx.breakpoint = EBP_DECAY;
+    }
+  }
+
+  void decay_process() {
+    if (ctx.value > (ctx.sustain_level + ENV_SPACE) && (ctx.decay != 0.0f)) {
+      ctx.position += ENV_POS_DELTA / ctx.decay;
+      ctx.value = 1.0f - ctx.position; 
+    } else {
+      ctx.value = ctx.sustain_level;
+      ctx.breakpoint = EBP_SUSTAIN;
+    }
+  }
+
+  void sustain_process() {
+  }
+
+  void release_process() {
+    if (ctx.value > ENV_SPACE && (ctx.release != 0.0f)) {
+      ctx.position += ENV_POS_DELTA / ctx.release;
+      ctx.value = ctx.released_value - (ctx.released_value)*(ctx.position); 
+    } else {
+      ctx.position = 0.0f;
+      ctx.value = 0.0f;
+      ctx.breakpoint = EBP_START;
+    }
+  }
+
+  float process(uint8_t gate_on) {
+    if (ctx.on != gate_on) {
+      if (gate_on) {
+        ctx.breakpoint = EBP_ATTACK;
+        ctx.value = 0.0f;
+        ctx.position = ctx.value;
+        ctx.on = 1;
+      } else {
+        ctx.breakpoint = EBP_RELEASE;
+        ctx.position = 0.0f;
+        ctx.released_value = ctx.value;
+        ctx.on = 0;
+      }
+      return process(gate_on);
+    }
+
+    switch (ctx.breakpoint) {
+      case EBP_START:
+        break;
+      case EBP_ATTACK:
+        attack_process();
+        break;
+      case EBP_DECAY:
+        decay_process();
+        break;
+      case EBP_SUSTAIN:
+        sustain_process();
+        break;
+      case EBP_RELEASE:
+        release_process();
+        break;
+    }
+
+    return ctx.value < 0 ? 0.0f : (ctx.value > 1.0f ? 1.0f : ctx.value);
+  }
+
+  void parameter_init() {
+    ctx.attack = ${AttackTime};
+    ctx.decay = ${DecayTime};
+    ctx.release = ${ReleaseTime};
+    ctx.sustain_level = ${SustainLevel};
+  }
+
+  void reset() {
+    ctx.breakpoint = EBP_START;
+    ctx.value = 0.0f;
+    ctx.released_value = 0.0f;
+    ctx.position = 0.0f;
+    ctx.on = 0;
+  }
+
+  void init() {
+    parameter_init();
+    reset();
+  }
+};
+
+static uint8_t gate_on = 0;
+static Envelope env;
+static auto cb = [&](){
+  out0 = env.process(gate_on);
+};
+static auto event = Midiglue::make_cyclic_us_event<>(cb);
+
+if (@in0) {
+  gate_on = !!in0;
+} else if (@in1) {
+  env.ctx.attack = in1 > 0 ? in1 : 0.0f;
+} else if (@in2) {
+  env.ctx.decay = in2 > 0 ? in2 : 0.0f;
+} else if (@in3) {
+  env.ctx.sustain_level = in3 > 0 ? in3 : 0.0f;
+} else if (@in4) {
+  env.ctx.release = in4 > 0 ? in4 : 0.0f;
+} else if (@setup) {
+  event->schedule(1000.0); // per 1 millisec
+}
