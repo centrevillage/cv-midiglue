@@ -1,6 +1,9 @@
 <Comment>
 Euclidean Rhythm generator.
 
+MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
+
 <I/O>
 input Int : Step
 input Int : Fill
