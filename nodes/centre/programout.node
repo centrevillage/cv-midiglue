@@ -1,0 +1,26 @@
+<Comment>
+MIT License Copyright (c) 2020 centrevillage
+
+<I/O>
+input Int : Program Number
+input Int : Midi Channnel
+output MidiPacket : Output
+
+<Description>
+Output MIDI Program Change
+
+<Parameter>
+parameter Channel = 1 : Default MIDI channel
+
+<Code>
+static uint8_t midi_ch = ${Channel};
+static MidiPacket packet = MidiPacket(0xC0, ${Channel}, 0, 0, Midiglue::MIDIEventType::ProgramChange);
+
+if (@in0) {
+  packet.byte1 = (0x7F & (uint8_t)in0);
+  out0 = packet;
+} else if (@in1) {
+  if (0 < in1 && in1 <= 16) {
+    packet.byte0 = 0xC0 | (0x0F & (uint8_t)(in1-1));
+  }
+}
