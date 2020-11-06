@@ -1,0 +1,58 @@
+<Comment>
+Sine Wave Generator
+
+MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
+
+<I/O>
+input Any : CV Rate Trigger 
+input FloatList : Frequency List
+input Any : Phase Reset Trigger 
+output FloatList : Output
+
+<Description>
+Sine Wave Generator
+
+<Setup>
+${this}( &(Midiglue::__bang) , Midiglue::SETUP );
+
+<Parameter>
+parameter Freq = 440.0 : Frequency
+
+<Code>
+static std::array<Float, Midiglue::CV_RESAMPLE_FACTOR> input{};
+static FloatList output{Midiglue::init_default<FloatList>()};
+static Float phase = 0;
+static uint8_t no_input = 1;
+const Float base_delta = (Float)Midiglue::CV_PERIOD_US / 1e6;
+
+if (@in0) {
+  if (no_input) {
+    const auto size = output->size();
+    for (size_t i = 0; i < size; ++i) {
+      const Float delta_phase = base_delta * ${Freq};
+      output->at(i) = sin(phase * 2.0f * PI);
+      phase += delta_phase;
+      phase -= (int32_t)phase; // reset phase if it overlap
+    }
+  } else {
+    const auto size = input.size();
+    for (size_t i = 0; i < size; ++i) {
+      const Float freq = input[i];
+      const Float delta_phase = base_delta * freq;
+      output->at(i) = sin(phase * 2.0f * PI);
+      phase += delta_phase;
+      phase -= (int32_t)phase; // reset phase if it overlap
+    }
+  }
+  out0 = output;
+} else if (@in1) {
+  if (in1->size() >= Midiglue::CV_RESAMPLE_FACTOR){
+    no_input = 0;
+    std::copy_n(in1->begin(), Midiglue::CV_RESAMPLE_FACTOR, input.begin());
+  }
+} else if (@in2) {
+  phase = 0;
+} else if (@setup) {
+  output->resize(Midiglue::CV_RESAMPLE_FACTOR);
+}

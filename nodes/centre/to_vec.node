@@ -1,0 +1,28 @@
+<Comment>
+Float to FloatList
+
+MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
+
+<I/O>
+input Float : Input
+output FloatList : Output
+
+<Description>
+Float to FloatList
+
+<Setup>
+${this}( &(Midiglue::__bang) , Midiglue::SETUP );
+
+<Code>
+static FloatList output{Midiglue::init_default<FloatList>()};
+
+if (@in0) {
+  const auto size = output->size();
+  for (size_t i = 0; i < size; ++i) {
+    output->at(i) = in0;
+  }
+  out0 = output;
+} else if (@setup) {
+  output->resize(Midiglue::CV_RESAMPLE_FACTOR);
+}

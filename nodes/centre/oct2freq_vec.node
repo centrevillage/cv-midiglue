@@ -1,14 +1,15 @@
 <Comment>
-Octave to Frequency converter
+Octave to Frequency converter for FloatList
 
 MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
 
 <I/O>
-input Float : Octave
-output Float : Freq
+input FloatList : Octave List
+output FloatList : Frequency List
 
 <Description>
-Octave to Frequency converter
+Octave to Frequency converter for Float List
 
 <Parameter>
 parameter BaseFreq = 440.0 : Base Frequency
@@ -27,7 +28,15 @@ static const float root_freq_mult = []{
 }();
 static const float root_freq = (float)${BaseFreq} * root_freq_mult;
 static const float root_key = (float)(${RootKey} < 0 ? 0 : (${RootKey} > 11 ? 11 : ${RootKey}));
+static FloatList output{Midiglue::init_default<FloatList>()};
 
 if (@in0) {
-  out0 = root_freq * powf(2.0, in0 + (root_key/12.0));
+  const auto size = in0->size();
+  if (output->size() != size) {
+    output->resize(size);
+  }
+  for (size_t i = 0; i < size; ++i) {
+    output->at(i) = root_freq * powf(2.0, in0->at(i) + (root_key/12.0));
+  }
+  out0 = output;
 }

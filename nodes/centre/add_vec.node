@@ -1,0 +1,41 @@
+<Comment>
+MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
+
+<I/O>
+input FloatList : Left operand, triggers the calculation
+input FloatList : Right operand, stored
+output FloatList : Result
+
+<Description>
+Calculate Left + Right.
+Output is triggered only by Left input.
+
+<Parameter>
+parameter Right = 0.0 : Default right value
+
+<Setup>
+${this}( &(Midiglue::__bang) , Midiglue::SETUP );
+
+<Code>
+static FloatList right{Midiglue::init_default<FloatList>()};
+static FloatList output{Midiglue::init_default<FloatList>()};
+
+if (@in0) {
+  const auto size = in0->size() > right->size() ? right->size() : in0->size();
+  if (output->size() != size) {
+    output->resize(size);
+  }
+  for (size_t i = 0; i < size; ++i) {
+    output->at(i) = in0->at(i) + right->at(i);
+  }
+  out0 = output;
+} else if (@in1) {
+  right = in1;
+} else if (@setup) {
+  output->resize(Midiglue::CV_RESAMPLE_FACTOR);
+  right->resize(Midiglue::CV_RESAMPLE_FACTOR);
+  for (size_t i = 0; i < Midiglue::CV_RESAMPLE_FACTOR; ++i) {
+    right->at(i) = ${Right};
+  }
+}

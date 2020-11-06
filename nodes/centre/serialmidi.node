@@ -1,0 +1,17 @@
+<Comment>
+MIT License Copyright (c) 2020 centrevillage
+
+<I/O>
+input MidiPacketList : Input
+output MidiPacket : Output
+
+<Description>
+Output serialized midi packet
+
+<Code>
+if (@in0) {
+  const size_t size = in0->size();
+  for (size_t i = 0; i < size; ++i) {
+    out0 = in0->at(i);
+  }
+}

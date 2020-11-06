@@ -1,0 +1,19 @@
+<Comment>
+Wavetable phase generator
+
+MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
+
+<I/O>
+input Float : Freq
+input Float : Phase
+output Float : Wavetable phase(0 to 1.0)
+
+<Description>
+
+<Parameter>
+parameter Freq = 440 : Initial Freq value
+parameter Phase = 0 : Initial Phase value
+
+<Code>
+//TODO:

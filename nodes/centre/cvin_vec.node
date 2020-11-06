@@ -1,0 +1,28 @@
+<Comment>
+Copyright (c) 2018-2020, sigboost, inc., All Rights Reserved.
+This file is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) license.
+
+<I/O>
+output FloatList : CV voltage list
+
+<Description>
+CV Input. Sampling rate is 40kHz.
+
+<Parameter>
+parameter Number = ["1", "2"] : Jack number of CV input
+
+<Requirements>
+require CV_Input_Vec_${Number}
+
+<Setup>
+Midiglue::attach(Midiglue::STEREOMINI_IN_${Number}, ${this}, 0, Midiglue::DataCategory::VoltageArray);
+${this}( &(Midiglue::__bang) , Midiglue::SETUP );
+
+<Code>
+static FloatList output{Midiglue::init_default<FloatList>()};
+if(@jackin0){
+    std::copy_n((Float*)(_data), Midiglue::CV_RESAMPLE_FACTOR, output->begin());
+    out0 = output;
+}else if (@setup){
+    output->resize(Midiglue::CV_RESAMPLE_FACTOR);
+}
