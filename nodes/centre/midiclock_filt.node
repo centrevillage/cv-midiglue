@@ -1,0 +1,22 @@
+<Comment>
+MIT License Copyright (c) 2020 centrevillage
+(see LICENSE file)
+
+<I/O>
+input MidiPacket : MIDI input
+output MidiPacket : Type matches
+output MidiPacket : Not matches
+
+<Description>
+Extract midi clock and start/stop/continue from midi packet
+
+<Code>
+if (@in0) {
+  if (Midiglue::is_valid(in0)) {
+    if (in0.isTimingClock() || in0.isTimingClockStart() || in0.isTimingClockStop() || in0.isTimingClockContinue()) {
+      out0 = in0;
+    } else {
+      out1 = in0;
+    }
+  }
+}
